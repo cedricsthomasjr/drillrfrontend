@@ -15,6 +15,7 @@ type QuizQuestion = {
   question: string;
   options?: string[];
   answer: string;
+  explanation?: string;
 };
 
 export default function QuizPage() {
@@ -28,6 +29,8 @@ export default function QuizPage() {
   const [showReview, setShowReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [topics, setTopics] = useState<string[]>([]);
 
   const searchParams = useSearchParams();
   const study_material = searchParams.get("study_material");
@@ -53,13 +56,19 @@ export default function QuizPage() {
         let parsed = JSON.parse(text);
         if (typeof parsed === "string") parsed = JSON.parse(parsed);
 
-        const quizArray = Array.isArray(parsed)
-          ? parsed
-          : Array.isArray(parsed.questions)
+        const quizArray = Array.isArray(parsed.questions)
           ? parsed.questions
           : [];
-
         setQuiz(quizArray);
+
+        const rawSummary = parsed.summary || "";
+        setSummary(rawSummary);
+        setTopics(
+          rawSummary
+            .split(",")
+            .map((t: string) => t.trim())
+            .filter((t: string) => t.length > 0)
+        );
       } catch (err) {
         setError("Failed to generate quiz. Please try again.");
         console.error(err);
@@ -107,7 +116,7 @@ export default function QuizPage() {
     if (percent === 100) {
       return (
         <>
-          <span>🌟 Perfect!</span>
+          🌟 Perfect!
           <br />
           <span className="text-sm text-gray-500">
             You aced every question — final boss energy.
@@ -117,7 +126,7 @@ export default function QuizPage() {
     } else if (percent >= 90) {
       return (
         <>
-          <span>🔥 Excellent work!</span>
+          🔥 Excellent work!
           <br />
           <span className="text-sm text-gray-500">
             Nearly flawless. Just clean up the edges.
@@ -127,7 +136,7 @@ export default function QuizPage() {
     } else if (percent >= 75) {
       return (
         <>
-          <span>✅ Strong showing!</span>
+          ✅ Strong showing!
           <br />
           <span className="text-sm text-gray-500">
             You're on solid ground. Review and sharpen.
@@ -137,7 +146,7 @@ export default function QuizPage() {
     } else if (percent >= 60) {
       return (
         <>
-          <span>🧩 Making progress.</span>
+          🧩 Making progress.
           <br />
           <span className="text-sm text-gray-500">
             You've got the fundamentals — now refine.
@@ -147,7 +156,7 @@ export default function QuizPage() {
     } else if (percent >= 40) {
       return (
         <>
-          <span>🛠 Room for growth.</span>
+          🛠 Room for growth.
           <br />
           <span className="text-sm text-gray-500">
             You're picking up the pieces. Stay consistent.
@@ -157,7 +166,7 @@ export default function QuizPage() {
     } else if (percent >= 25) {
       return (
         <>
-          <span>📉 Bit of a slide.</span>
+          📉 Bit of a slide.
           <br />
           <span className="text-sm text-gray-500">
             That's alright. Regroup, retake, repeat.
@@ -167,7 +176,7 @@ export default function QuizPage() {
     } else {
       return (
         <>
-          <span>💡 Starting point secured.</span>
+          💡 Starting point secured.
           <br />
           <span className="text-sm text-gray-500">
             You showed up. That’s the first step. Let’s level up.
@@ -180,37 +189,53 @@ export default function QuizPage() {
   return (
     <main className="min-h-screen bg-[#1A1A1A] text-white px-6 pt-28 pb-12 font-sans">
       <Navbar />
-
       <section className="max-w-4xl mx-auto mt-6">
         {/* Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">Your Quiz</h1>
-          {study_material && (
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Your Quiz<span className="text-indigo-400">.</span>
+          </h1>
+          {summary ? (
+            <p className="text-sm text-gray-400 italic"></p>
+          ) : study_material ? (
             <p className="text-sm text-gray-400 italic">
               Based on:{" "}
               <span className="text-gray-300">
                 {decodeURIComponent(study_material).slice(0, 100)}...
               </span>
             </p>
-          )}
+          ) : null}
         </div>
 
-        {/* Loading/Error State */}
-        {loading && (
-          <p className="text-center text-gray-400 animate-pulse">
-            Generating your quiz…
-          </p>
-        )}
-        {error && (
-          <p className="text-center text-red-400 font-semibold">{error}</p>
+        {/* Topic Tags */}
+        {topics.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-2 mb-10">
+            {topics.map((topic, idx) => (
+              <span
+                key={idx}
+                className="px-3 py-1 rounded-full text-sm font-medium bg-[#2A2A2A] text-gray-300 border border-[#3A3A3C] hover:bg-[#6366F1] hover:text-white transition"
+              >
+                {topic}
+              </span>
+            ))}
+          </div>
         )}
 
-        {/* Quiz UI */}
+        {/* Loading/Error */}
+        {loading && (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#1A1A1A] bg-opacity-95 space-y-4">
+            <div className="w-12 h-12 border-4 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-400 text-sm">Generating your quiz…</p>
+          </div>
+        )}
+
         {!loading && Array.isArray(quiz) && (
           <>
+            {/* Quiz Questions */}
             <div className="space-y-8">
               {quiz.map((q, idx) => {
                 const selected = selectedAnswers[idx];
+                const isCorrect = selected === q.answer;
                 return (
                   <Card
                     key={idx}
@@ -230,8 +255,9 @@ export default function QuizPage() {
                         <ul className="space-y-2">
                           {q.options.map((opt, i) => {
                             const isSelected = selected === opt;
-                            const isCorrect = submitted && opt === q.answer;
-                            const isIncorrect =
+                            const isOptionCorrect =
+                              submitted && opt === q.answer;
+                            const isOptionIncorrect =
                               submitted && isSelected && opt !== q.answer;
 
                             return (
@@ -240,9 +266,9 @@ export default function QuizPage() {
                                 onClick={() => handleSelect(idx, opt)}
                                 className={`flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium cursor-pointer transition-all duration-200
                                   ${
-                                    isCorrect
+                                    isOptionCorrect
                                       ? "bg-green-900 border-green-400 text-green-200"
-                                      : isIncorrect
+                                      : isOptionIncorrect
                                       ? "bg-red-900 border-red-400 text-red-200"
                                       : isSelected
                                       ? "bg-[#2A2A2A] border-[#6366F1] text-white"
@@ -254,13 +280,13 @@ export default function QuizPage() {
                                   }`}
                               >
                                 {opt}
-                                {submitted && isCorrect && (
+                                {submitted && isOptionCorrect && (
                                   <CheckCircle
                                     size={18}
                                     className="text-green-300"
                                   />
                                 )}
-                                {submitted && isIncorrect && (
+                                {submitted && isOptionIncorrect && (
                                   <XCircle size={18} className="text-red-300" />
                                 )}
                               </li>
@@ -270,12 +296,22 @@ export default function QuizPage() {
                       )}
 
                       {submitted && showReview && (
-                        <p className="text-sm mt-4 text-gray-400">
-                          Correct Answer:{" "}
-                          <span className="font-semibold text-[#8B5CF6]">
-                            {q.answer}
-                          </span>
-                        </p>
+                        <div className="mt-4 text-sm text-gray-400 space-y-1">
+                          <p>
+                            Correct Answer:{" "}
+                            <span className="font-semibold text-[#8B5CF6]">
+                              {q.answer}
+                            </span>
+                          </p>
+                          {q.explanation && (
+                            <p className="italic text-gray-500">
+                              <span className="text-gray-400 font-medium">
+                                Why:
+                              </span>{" "}
+                              {q.explanation}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </CardContent>
                   </Card>
@@ -331,7 +367,7 @@ export default function QuizPage() {
 
                     <Progress
                       value={(animatedScore / quiz.length) * 100}
-                      className="h-3"
+                      className="h-3 [&>div]:bg-indigo-400"
                     />
 
                     <div className="mt-6 text-center text-lg font-medium text-gray-300">
