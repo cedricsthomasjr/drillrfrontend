@@ -1,108 +1,75 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
 
 export default function Home() {
-  const [studyText, setStudyText] = useState('');
-  const [format, setFormat] = useState('multiple choice');
-  const [num, setNum] = useState(5);
-  const [quiz, setQuiz] = useState<string | object | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    setQuiz(null);
-
-    const res = await fetch('http://127.0.0.1:5000/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        study_material: studyText,
-        format,
-        num,
-      }),
-    });
-
-    const data = await res.json();
-    setQuiz(data);
-    setLoading(false);
-  };
+  const router = useRouter();
 
   return (
-    <main className="min-h-screen bg-black text-white px-6 py-10">
-      <h1 className="text-5xl font-bold text-blue-500 mb-8">Drilr 🔥</h1>
-      <input
-  type="file"
-  accept=".txt,.pdf,.docx"
-  className="block mb-4"
-  onChange={(e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    <div className="min-h-screen bg-[#1A1A1A] text-white font-sans transition-colors duration-300">
+      {/* 🧭 Navbar */}
+      <nav className="w-full border-b border-[#2A2A2A] py-4 bg-[#1A1A1A]">
+        <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
+          {/* Replace this with logo + links if needed */}
+          <h2 className="text-xl font-semibold text-white">
+            Drilr<span className="text-[#6366F1]">.</span>
+          </h2>
+        </div>
+      </nav>
 
-    const reader = new FileReader();
+      {/* 🧠 Hero */}
+      <section className="text-center py-24 px-4 border-b border-[#1F1F1F]">
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
+          Study Smarter with Drilr<span className="text-[#F59E0B]">.</span>
+        </h1>
+        <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
+          Turn your class notes into instant quizzes. Upload. Convert. Drill.
+        </p>
+        <section className="flex flex-col gap-4 md:flex-row md:justify-center md:gap-6">
+          <button
+            onClick={() => router.push("/generate")}
+            className="bg-[#F59E0B] hover:bg-[#D97706] text-white px-8 py-3 rounded-full text-sm font-medium shadow transition"
+          >
+            Generate a Quiz
+          </button>
+        </section>
+      </section>
 
-    // For text files
-    if (file.type === "text/plain") {
-      reader.onload = () => setStudyText(reader.result as string);
-      reader.readAsText(file);
-    } else {
-      // For other types (PDF, DOCX), we upload to backend
-      const formData = new FormData();
-      formData.append("file", file);
+      {/* ⚡ Features */}
+      <section className="py-20 px-6 max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          {
+            title: "📝 Upload Notes",
+            desc: "Accepts .txt, .pdf, and .docx files for fast content extraction.",
+          },
+          {
+            title: "⚙️ Choose Format",
+            desc: "Multiple choice, fill in the blank, or free response—your call.",
+          },
+          {
+            title: "🚀 Instant Quizzes",
+            desc: "Get study questions generated in seconds. Fast and accurate.",
+          },
+        ].map((item, idx) => (
+          <div
+            key={idx}
+            className="bg-[#1F1F1F] border border-[#2A2A2A] p-6 rounded-xl shadow hover:shadow-lg transition-all"
+          >
+            <h3 className="text-lg font-semibold mb-2 text-white">
+              {item.title}
+            </h3>
+            <p className="text-sm text-gray-400">{item.desc}</p>
+          </div>
+        ))}
+      </section>
 
-      fetch("http://127.0.0.1:5000/upload", {
-      method: "POST",
-      body: formData,
-    })
+      {/* 🚫 Removed Generator Section – now on /generate */}
 
-        .then((res) => res.json())
-        .then((data) => setStudyText(data.text))
-        .catch((err) => console.error("File upload error:", err));
-    }
-  }}
-/>
-
-      <textarea
-        value={studyText}
-        onChange={(e) => setStudyText(e.target.value)}
-        placeholder="Paste your study guide or notes here..."
-        className="w-full h-48 p-4 bg-gray-900 text-white rounded-lg mb-6 border border-gray-700"
-      />
-
-      <div className="flex flex-wrap gap-4 mb-6 items-center">
-        <select
-          value={format}
-          onChange={(e) => setFormat(e.target.value)}
-          className="bg-gray-900 border border-gray-700 px-4 py-2 rounded"
-        >
-          <option value="multiple choice">Multiple Choice</option>
-          <option value="fill in the blank">Fill in the Blank</option>
-          <option value="free response">Free Response</option>
-        </select>
-
-        <input
-          type="number"
-          value={num}
-          min={1}
-          max={20}
-          onChange={(e) => setNum(Number(e.target.value))}
-          className="w-20 bg-gray-900 border border-gray-700 px-4 py-2 rounded"
-        />
-
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-medium"
-        >
-          {loading ? 'Generating...' : 'Generate Quiz'}
-        </button>
-      </div>
-
-      {quiz && (
-        <pre className="bg-gray-900 p-6 rounded-lg border border-gray-700 text-sm whitespace-pre-wrap">
-          {typeof quiz === 'object' ? JSON.stringify(quiz, null, 2) : quiz}
-        </pre>
-      )}
-    </main>
+      {/* 🦶 Footer */}
+      <Footer />
+    </div>
   );
 }
