@@ -38,8 +38,8 @@ export default function QuizCard({
   return (
     <Card className="bg-[#1C1C1E] border border-[#2A2A2C] text-white">
       <CardHeader>
-        <CardTitle className="text-xs uppercase text-gray-400 tracking-wider">
-          Q{question.number || index + 1} • {question.topic}
+        <CardTitle className="text-xs uppercase text-orange-400 tracking-wider">
+          Question {question.number || index + 1}
         </CardTitle>
       </CardHeader>
 
@@ -55,14 +55,14 @@ export default function QuizCard({
               value={selected || ""}
               onChange={(e) => handleSelect(index, e.target.value)}
               placeholder="Type your answer here..."
-              className="w-full mt-2 bg-[#1F1F1F] border border-[#2C2C2C] text-gray-200 p-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full mt-2 bg-[#1F1F1F] border border-[#2C2C2C] text-gray-200 p-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
               rows={4}
             />
             {submitted && showReview && (
               <div className="mt-4 text-sm text-gray-400 space-y-1">
                 <p>
                   Correct Answer:{" "}
-                  <span className="font-semibold text-[#8B5CF6]">
+                  <span className="font-semibold text-orange-400">
                     {question.answer}
                   </span>
                 </p>
@@ -90,24 +90,24 @@ export default function QuizCard({
                     className={`flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium cursor-pointer transition-all duration-200
                       ${
                         correct
-                          ? "bg-green-900 border-green-400 text-green-200"
+                          ? "bg-[#281B12] border-orange-500 text-orange-300"
                           : incorrect
-                          ? "bg-red-900 border-red-400 text-red-200"
+                          ? "bg-[#2A1A1A] border-red-500 text-red-300"
                           : isSelected(opt)
-                          ? "bg-[#2A2A2A] border-[#6366F1] text-white"
+                          ? "bg-[#2A2A2A] border-orange-400 text-white"
                           : "bg-[#1F1F1F] border-[#2C2C2C] text-gray-300"
                       }
                       ${
                         !submitted &&
-                        "hover:bg-[#2A2E3B] hover:border-[#6366F1] hover:scale-[1.02] active:scale-[0.98]"
+                        "hover:bg-[#2A2E3B] hover:border-orange-400 hover:scale-[1.02] active:scale-[0.98]"
                       }`}
                   >
                     {opt}
                     {submitted && correct && (
-                      <CheckCircle size={18} className="text-green-300" />
+                      <CheckCircle size={18} className="text-orange-400" />
                     )}
                     {submitted && incorrect && (
-                      <XCircle size={18} className="text-red-300" />
+                      <XCircle size={18} className="text-red-400" />
                     )}
                   </li>
                 );
@@ -116,11 +116,12 @@ export default function QuizCard({
           )
         )}
 
-        {submitted && showReview && format !== "free response" && (
+        {/* Review section */}
+        {submitted && showReview && (
           <div className="mt-4 text-sm text-gray-400 space-y-1">
             <p>
               Correct Answer:{" "}
-              <span className="font-semibold text-[#8B5CF6]">
+              <span className="font-semibold text-orange-400">
                 {question.answer}
               </span>
             </p>
@@ -132,8 +133,10 @@ export default function QuizCard({
             )}
           </div>
         )}
+
+        {/* Free response feedback */}
         {format === "free response" && submitted && feedback && (
-          <div className="mt-4 text-sm text-gray-300">
+          <div className="mt-4 text-sm text-orange-300 space-y-2">
             <p
               className={`font-medium ${
                 feedback.score === 1
@@ -145,15 +148,32 @@ export default function QuizCard({
             >
               {feedback.score === 1
                 ? "✅ Marked Correct"
-                : feedback.score <= 1 && feedback.score > 0
+                : feedback.score > 0
                 ? "⚠️ Partially Correct"
                 : "❌ Marked Incorrect"}
             </p>
-            <p className="text-gray-400 italic">{feedback.feedback}</p>
-            {feedback.confidence !== undefined && (
-              <p className="text-xs text-gray-500 mt-1">
-                AI Confidence: {feedback.confidence}%
-              </p>
+            <p className="text-orange-200 italic">{feedback.feedback}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Points Awarded: {(feedback.score * 1).toFixed(1)} / 1.0
+              {feedback.confidence !== undefined &&
+                ` • AI Confidence: ${feedback.confidence}%`}
+            </p>
+
+            {/* Manual override button */}
+            {feedback.score < 1 && (
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    const event = new CustomEvent("overrideCorrect", {
+                      detail: { index },
+                    });
+                    window.dispatchEvent(event);
+                  }
+                }}
+                className="text-xs px-3 py-2 rounded-lg font-semibold bg-orange-500 hover:bg-orange-600 text-white transition mt-2"
+              >
+                This Answers the Question
+              </button>
             )}
           </div>
         )}

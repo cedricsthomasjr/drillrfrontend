@@ -8,10 +8,10 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link
           href="/"
-          className="text-2xl font-extrabold tracking-tight text-white hover:text-[#6366F1] transition"
+          className="text-2xl font-extrabold tracking-tight text-white hover:text-orange-400 transition"
         >
           Drilr
-          <span className="text-2xl font-extrabold text-indigo-400">.</span>
+          <span className="text-2xl font-extrabold text-orange-400">.</span>
         </Link>
 
         <nav className="space-x-6 text-sm font-medium text-gray-400">

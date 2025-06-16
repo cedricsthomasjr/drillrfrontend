@@ -1,18 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-
-import Navbar from "../components/Navbar";
-import QuizCard from "../components/quiz/QuizCard";
-import QuizHeader from "../components/quiz/QuizHeader";
-import TopicTags from "../components/quiz/TopicTags";
-import LoadingOverlay from "../components/quiz/LoadingOverlay";
-import QuizResults from "../components/quiz/QuizResults";
+import Navbar from "../Navbar";
+import QuizCard from "./QuizCard";
+import QuizHeader from "./QuizHeader";
+import TopicTags from "./TopicTags";
+import LoadingOverlay from "./LoadingOverlay";
+import QuizResults from "./QuizResults";
 import { Button } from "@/components/ui/button";
 
-type QuizQuestion = {
+export type QuizQuestion = {
   number: number;
   topic: string;
   question: string;
@@ -21,7 +18,19 @@ type QuizQuestion = {
   explanation?: string;
 };
 
-export default function QuizPage() {
+type QuizPageProps = {
+  study_material: string;
+  format: string;
+  num: number;
+  selected_topics?: string[] | null; // <-- Add this line
+};
+
+export default function QuizPage({
+  study_material,
+  format,
+  num,
+  selected_topics = null, // <- Add this default
+}: QuizPageProps) {
   const [quiz, setQuiz] = useState<QuizQuestion[] | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<number, string>
@@ -35,11 +44,6 @@ export default function QuizPage() {
   const [summary, setSummary] = useState<string | null>(null);
   const [topics, setTopics] = useState<string[]>([]);
   const [grading, setGrading] = useState(false);
-
-  const searchParams = useSearchParams();
-  const study_material = searchParams.get("study_material");
-  const format = searchParams.get("format") || "multiple choice";
-  const num = Number(searchParams.get("num")) || 5;
   const [gradedFeedback, setGradedFeedback] = useState<
     Record<number, { score: number; feedback: string; confidence?: number }>
   >({});
@@ -56,7 +60,12 @@ export default function QuizPage() {
         const res = await fetch("http://127.0.0.1:5000/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ study_material, format, num }),
+          body: JSON.stringify({
+            study_material,
+            format,
+            num,
+            selected_topics: selected_topics ?? [],
+          }),
         });
 
         const text = await res.text();
@@ -85,14 +94,14 @@ export default function QuizPage() {
     };
 
     fetchQuiz();
-  }, [study_material, format, num]);
+  }, [study_material, format, num, selected_topics]);
 
   useEffect(() => {
     if (submitted) {
       let current = 0;
       const interval = setInterval(() => {
         if (current < score) {
-          current += 0.1; // Animate in tenths
+          current += 0.1;
           if (current > score) current = score;
           setAnimatedScore(parseFloat(current.toFixed(1)));
         } else {
@@ -111,8 +120,7 @@ export default function QuizPage() {
   const handleSubmit = async () => {
     if (!quiz || !Array.isArray(quiz)) return;
 
-    setGrading(true); // ← Start grading
-
+    setGrading(true);
     let totalScore = 0;
     const feedbackMap: typeof gradedFeedback = {};
 
@@ -159,25 +167,24 @@ export default function QuizPage() {
     setGradedFeedback(feedbackMap);
     setScore(totalScore);
     setSubmitted(true);
-    setGrading(false); // ← End grading
+    setGrading(false);
   };
 
   return (
     <main className="min-h-screen bg-[#1A1A1A] text-white px-6 pt-28 pb-12 font-sans">
       {grading && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#1A1A1A] bg-opacity-95 space-y-4">
-          <div className="w-12 h-12 border-4 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">Drillr is grading your quiz…</p>
+          <div className="w-12 h-12 border-4 border-orange-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-orange-300 text-sm">
+            Drillr is grading your quiz…
+          </p>
         </div>
       )}
 
       <Navbar />
       <section className="max-w-4xl mx-auto mt-6">
-        <QuizHeader
-          study_material={study_material || undefined}
-          summary={summary}
-        />
-        <TopicTags topics={topics} />
+        <QuizHeader study_material={study_material} summary={summary} />
+        <TopicTags topics={selected_topics ?? topics} />
         {loading && <LoadingOverlay />}
 
         {!loading && quiz && (
@@ -193,7 +200,7 @@ export default function QuizPage() {
                   showReview={showReview}
                   handleSelect={handleSelect}
                   format={format}
-                  feedback={gradedFeedback[idx]} // ← NEW PROP
+                  feedback={gradedFeedback[idx]}
                 />
               ))}
             </div>
@@ -203,7 +210,7 @@ export default function QuizPage() {
                 <div className="text-center">
                   <Button
                     onClick={handleSubmit}
-                    className="px-8 py-3 text-md font-semibold text-white bg-[#1F1F1F] border border-[#2C2C2C] hover:bg-[#2A2A2E] hover:border-[#6366F1] transition-all duration-200"
+                    className="px-8 py-3 text-md font-semibold text-white bg-[#1F1F1F] border border-[#2C2C2C] hover:bg-[#2A2A2E] hover:border-orange-400 transition-all duration-200"
                   >
                     Submit Quiz
                   </Button>
@@ -222,7 +229,7 @@ export default function QuizPage() {
         )}
 
         {!loading && quiz && quiz.length === 0 && (
-          <p className="text-center text-gray-500">
+          <p className="text-center text-orange-400">
             No questions were generated.
           </p>
         )}
