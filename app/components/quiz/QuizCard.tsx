@@ -88,23 +88,23 @@ export default function QuizCard({
                     key={i}
                     onClick={() => handleSelect(index, opt)}
                     className={`flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium cursor-pointer transition-all duration-200
-                      ${
-                        correct
-                          ? "bg-[#281B12] border-orange-500 text-orange-300"
-                          : incorrect
-                          ? "bg-[#2A1A1A] border-red-500 text-red-300"
-                          : isSelected(opt)
-                          ? "bg-[#2A2A2A] border-orange-400 text-white"
-                          : "bg-[#1F1F1F] border-[#2C2C2C] text-gray-300"
-                      }
-                      ${
-                        !submitted &&
-                        "hover:bg-[#2A2E3B] hover:border-orange-400 hover:scale-[1.02] active:scale-[0.98]"
-                      }`}
+    ${
+      correct
+        ? "bg-[#122819] border-green-500 text-green-300"
+        : incorrect
+        ? "bg-[#2A1A1A] border-red-500 text-red-300"
+        : isSelected(opt)
+        ? "bg-[#2A2A2A] border-orange-400 text-white"
+        : "bg-[#1F1F1F] border-[#2C2C2C] text-gray-300"
+    }
+    ${
+      !submitted &&
+      " hover:border-orange-400 hover:scale-[1.02] active:scale-[0.98]"
+    }`}
                   >
                     {opt}
                     {submitted && correct && (
-                      <CheckCircle size={18} className="text-orange-400" />
+                      <CheckCircle size={18} className="text-green-400" />
                     )}
                     {submitted && incorrect && (
                       <XCircle size={18} className="text-red-400" />
@@ -121,7 +121,7 @@ export default function QuizCard({
           <div className="mt-4 text-sm text-gray-400 space-y-1">
             <p>
               Correct Answer:{" "}
-              <span className="font-semibold text-orange-400">
+              <span className="font-semibold text-green-400">
                 {question.answer}
               </span>
             </p>
@@ -170,7 +170,7 @@ export default function QuizCard({
                     window.dispatchEvent(event);
                   }
                 }}
-                className="text-xs px-3 py-2 rounded-lg font-semibold bg-orange-500 hover:bg-orange-600 text-white transition mt-2"
+                className="text-xs px-3 py-2 rounded-lg font-semibold bg-green-500 hover:bg-green-600 text-white transition mt-2"
               >
                 This Answers the Question
               </button>

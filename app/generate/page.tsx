@@ -2,29 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import SelectableTopicTags from "../components/quiz/SelectableTopicTags";
 
 export default function GeneratePage() {
   const [studyText, setStudyText] = useState("");
   const [format, setFormat] = useState("multiple choice");
   const [num, setNum] = useState(5);
   const [uploading, setUploading] = useState(false);
-  const [topics, setTopics] = useState<string[]>([]);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const [showPopup, setShowPopup] = useState(false);
   const router = useRouter();
 
+  // Optional: still pre-fetch topics if you want, but unused now
   useEffect(() => {
     if (!studyText.trim()) return;
     const fetchTopics = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:5000/detect-topics", {
+        await fetch("http://127.0.0.1:5000/detect-topics", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ study_material: studyText }),
         });
-        const data = await res.json();
-        setTopics(data.topics || []);
       } catch (err) {
         console.error("Failed to extract topics", err);
       }
@@ -59,7 +54,7 @@ export default function GeneratePage() {
   const handleGenerate = async () => {
     if (!studyText.trim()) return;
 
-    setUploading(true); // use this as a temporary loading indicator
+    setUploading(true);
 
     try {
       const res = await fetch("http://127.0.0.1:5000/detect-topics", {
@@ -69,17 +64,13 @@ export default function GeneratePage() {
       });
 
       const data = await res.json();
-      const detected = data.topics || [];
+      const detectedTopics = data.topics || [];
 
-      if (detected.length > 0) {
-        setTopics(detected);
-        setShowPopup(true);
-      } else {
-        proceedToQuiz([]); // fallback if detection fails or gives nothing
-      }
+      // Save them properly!
+      proceedToQuiz(detectedTopics);
     } catch (err) {
       console.error("Failed to detect topics", err);
-      proceedToQuiz([]); // fallback to full material
+      proceedToQuiz([]); // fallback
     } finally {
       setUploading(false);
     }
@@ -187,51 +178,6 @@ export default function GeneratePage() {
           </button>
         </div>
       </div>
-
-      {showPopup && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center">
-          <div className="relative bg-[#1F1F1F] border border-[#2C2C2C] p-6 rounded-xl max-w-md w-full space-y-4 text-center">
-            {/* X Button */}
-            <button
-              onClick={() => setShowPopup(false)}
-              className="absolute top-2 right-3 text-gray-400 hover:text-white text-xl font-bold"
-              aria-label="Close"
-            >
-              &times;
-            </button>
-
-            <h2 className="text-xl font-semibold text-orange-400">
-              Pick Topics
-            </h2>
-            <p className="text-sm text-gray-400 mb-4">
-              Select at least one topic to focus your quiz.
-            </p>
-
-            <SelectableTopicTags
-              topics={topics}
-              selectedTopics={selectedTopics}
-              setSelectedTopics={setSelectedTopics}
-            />
-
-            <button
-              onClick={() => {
-                if (selectedTopics.length > 0) {
-                  setShowPopup(false);
-                  proceedToQuiz(selectedTopics);
-                }
-              }}
-              disabled={selectedTopics.length === 0}
-              className={`w-full px-6 py-3 rounded-lg font-semibold transition ${
-                selectedTopics.length > 0
-                  ? "bg-orange-500 text-white hover:bg-orange-600"
-                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Continue to Quiz →
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

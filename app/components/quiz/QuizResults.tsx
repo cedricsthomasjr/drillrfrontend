@@ -130,7 +130,7 @@ export default function QuizResults({
           </div>
         </div>
 
-        <Progress value={percent} className="h-3 [&>div]:bg-indigo-400" />
+        <Progress value={percent} className="h-3 [&>div]:bg-orange-400" />
 
         <div className="mt-6 text-center text-lg font-medium text-gray-300">
           {renderMessage()}

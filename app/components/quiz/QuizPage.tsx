@@ -184,7 +184,13 @@ export default function QuizPage({
       <Navbar />
       <section className="max-w-4xl mx-auto mt-6">
         <QuizHeader study_material={study_material} summary={summary} />
-        <TopicTags topics={selected_topics ?? topics} />
+
+        {(selected_topics ?? topics).length > 0 && (
+          <div className="flex justify-center  mb-8">
+            <TopicTags topics={selected_topics ?? topics} />
+          </div>
+        )}
+
         {loading && <LoadingOverlay />}
 
         {!loading && quiz && (
